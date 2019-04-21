@@ -739,6 +739,7 @@ static int osm_cpufreq_cpu_init(struct cpufreq_policy *policy)
 	unsigned int i, prev_cc = 0;
 	unsigned int xo_kHz;
 
+	//pr_info("[longnt] osm_cpufreq_cpu_init \n");
 	c = osm_configure_policy(policy);
 	if (!c) {
 		pr_err("no clock for CPU%d\n", policy->cpu);
@@ -778,7 +779,16 @@ static int osm_cpufreq_cpu_init(struct cpufreq_policy *policy)
 			table[i].frequency = OSM_INIT_RATE / 1000;
 		else
 			table[i].frequency = xo_kHz * lval;
+		
+		if(i == 13 && table[i].frequency == 2208000)
+		{
+			//pr_info("[longnt] Should unlock max frequency for gold cpus ?\n");
+			//table[i].frequency = 2361600;
+		}
+
 		table[i].driver_data = table[i].frequency;
+
+		pr_info("[longnt] frequency %d = %i \n", i, table[i].frequency);
 
 		if (core_count != parent->max_core_count)
 			table[i].frequency = CPUFREQ_ENTRY_INVALID;
@@ -846,12 +856,20 @@ static u32 find_voltage(struct clk_osm *c, unsigned long rate)
 {
 	struct osm_entry *table = c->osm_table;
 	int entries = c->num_entries, i;
+	unsigned long max_rate_oc1 = 2361600000;
 
 	for (i = 0; i < entries; i++) {
 		if (rate == table[i].frequency) {
 			/* OPP table voltages have units of mV */
+			//pr_info("[longnt][clk_osm][find_voltage] Return normal value for rate %lu = %d\n", rate, table[i].open_loop_volt);
 			return table[i].open_loop_volt * 1000;
 		}
+	}
+
+	if(rate == max_rate_oc1)
+	{
+		//pr_info("[longnt][clk_osm][find_voltage] Return hack value 896000\n");
+		return 896000;
 	}
 
 	return -EINVAL;
@@ -860,16 +878,19 @@ static u32 find_voltage(struct clk_osm *c, unsigned long rate)
 static int add_opp(struct clk_osm *c, struct device **device_list, int count)
 {
 	unsigned long rate = 0;
-	u32 uv;
+	u32 uv;//, uv1;
 	long rc;
 	int i, j = 0;
 	unsigned long min_rate = c->hw.init->rate_max[0];
-	unsigned long max_rate =
-			c->hw.init->rate_max[c->hw.init->num_rate_max - 1];
-
+	unsigned long max_rate = c->hw.init->rate_max[c->hw.init->num_rate_max - 1];
+	//unsigned long max_rate_oc1 = 2361600000;
+	
+	//pr_info("[longnt][clk_osm][add_opp] min_rate = %lu / max_rate = %lu\n", min_rate, max_rate);
 	while (1) {
 		rate = c->hw.init->rate_max[j++];
+		
 		uv = find_voltage(c, rate);
+		//pr_info("[longnt][clk_osm] find_voltage for rate %lu --> %d\n", rate, uv);
 		if (uv <= 0) {
 			pr_warn("No voltage for %lu.\n", rate);
 			return -EINVAL;
@@ -891,16 +912,25 @@ static int add_opp(struct clk_osm *c, struct device **device_list, int count)
 		 */
 		if (rate == min_rate) {
 			for (i = 0; i < count; i++) {
-				pr_info("Set OPP pair (%lu Hz, %d uv) on %s\n",
+				pr_info("[clk-cpu-osm]Set OPP pair (%lu Hz, %d uv) on %s\n",
 					rate, uv, dev_name(device_list[i]));
 			}
 		}
 
 		if (rate == max_rate && max_rate != min_rate) {
 			for (i = 0; i < count; i++) {
-				pr_info("Set OPP pair (%lu Hz, %d uv) on %s\n",
+				pr_info("[clk-cpu-osm]Set OPP pair (%lu Hz, %d uv) on %s\n",
 					rate, uv, dev_name(device_list[i]));
 			}
+		
+			//test
+			//if (rate == 2208000000)
+			//{			
+				//uv1 = find_voltage(c, max_rate_oc1);
+				//pr_info("[longnt][clk_osm] find_voltage for oc1 rate %lu --> %d\n", max_rate_oc1, uv1);
+				//pr_info("[longnt] Should call dev_pm_opp_add() for gold cpus ?\n");
+			//}
+			//test
 			break;
 		}
 
@@ -982,6 +1012,8 @@ static void populate_opp_table(struct platform_device *pdev)
 			return;
 		}
 
+		pr_info("[longnt][clk_osm] populate_opp_table for CPU=%d\n", cpu);
+		
 		hw_parent = clk_hw_get_parent(&c->hw);
 		parent = to_clk_osm(hw_parent);
 		cpu_dev = get_cpu_device(cpu);
@@ -1038,6 +1070,8 @@ static int clk_osm_read_lut(struct platform_device *pdev, struct clk_osm *c)
 	u32 data, src, lval, i, j = OSM_TABLE_SIZE;
 	struct clk_vdd_class *vdd = osm_clks_init[c->cluster_num].vdd_class;
 
+	//pr_info("[longnt] clk_osm_read_lut \n");
+
 	for (i = 0; i < OSM_TABLE_SIZE; i++) {
 		data = clk_osm_read_reg(c, FREQ_REG + i * OSM_REG_SIZE);
 		src = ((data & GENMASK(31, 30)) >> 30);
@@ -1055,7 +1089,7 @@ static int clk_osm_read_lut(struct platform_device *pdev, struct clk_osm *c)
 					((data & GENMASK(21, 16)) >> 16);
 		c->osm_table[i].open_loop_volt = (data & GENMASK(11, 0));
 
-		pr_debug("index=%d freq=%ld virtual_corner=%d open_loop_voltage=%u\n",
+		pr_debug("[longnt] index=%d freq=%ld virtual_corner=%d open_loop_voltage=%u\n",
 			 i, c->osm_table[i].frequency,
 			 c->osm_table[i].virtual_corner,
 			 c->osm_table[i].open_loop_volt);
@@ -1070,6 +1104,9 @@ static int clk_osm_read_lut(struct platform_device *pdev, struct clk_osm *c)
 	osm_clks_init[c->cluster_num].rate_max = devm_kcalloc(&pdev->dev,
 						 j, sizeof(unsigned long),
 						       GFP_KERNEL);
+	
+	//pr_info("[longnt] osm_clks_init[c->cluster_num].rate_max = %lu\n", osm_clks_init[c->cluster_num].rate_max);
+	
 	if (!osm_clks_init[c->cluster_num].rate_max)
 		return -ENOMEM;
 
@@ -1089,6 +1126,7 @@ static int clk_osm_read_lut(struct platform_device *pdev, struct clk_osm *c)
 				vdd->vdd_uv[i] = RPMH_REGULATOR_LEVEL_NOM;
 			else
 				vdd->vdd_uv[i] = RPMH_REGULATOR_LEVEL_TURBO;
+			//pr_info("[longnt] %d --> freq = %lu vdd = %d \n", i, c->osm_table[i].frequency, vdd->vdd_uv[i]);
 		}
 		vdd->num_levels = j;
 		vdd->cur_level = j;

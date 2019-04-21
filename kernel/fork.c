@@ -78,6 +78,8 @@
 #include <linux/compiler.h>
 #include <linux/sysctl.h>
 #include <linux/kcov.h>
+#include <linux/cpu_input_boost.h>
+#include <linux/devfreq_boost.h>
 
 #include <asm/pgtable.h>
 #include <asm/pgalloc.h>
@@ -184,6 +186,9 @@ static unsigned long *alloc_thread_stack_node(struct task_struct *tsk, int node)
 		if (!s)
 			continue;
 		this_cpu_write(cached_stacks[i], NULL);
+
+		/* Clear stale pointers from reused stack. */
+		memset(s->addr, 0, THREAD_SIZE);
 
 		tsk->stack_vm_area = s;
 		local_irq_enable();
@@ -1948,6 +1953,12 @@ long _do_fork(unsigned long clone_flags,
 	struct task_struct *p;
 	int trace = 0;
 	long nr;
+
+	/* Boost CPU to the max for 50 ms when userspace launches an app */
+	if (is_zygote_pid(current->pid)) {
+		cpu_input_boost_kick_max(50);
+		devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW, 50);
+	}
 
 	/*
 	 * Determine whether and which event to report to ptracer.  When

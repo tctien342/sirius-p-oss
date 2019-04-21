@@ -38,6 +38,14 @@
 #include <linux/seq_file.h>
 #endif
 
+#ifdef CONFIG_KLAPSE
+#include "../sde/klapse.h"
+#endif
+
+#ifdef CONFIG_EXPOSURE_ADJUSTMENT
+#include "exposure_adjustment.h"
+#endif
+
 /**
  * topology is currently defined by a set of following 3 values:
  * 1. num of layer mixers
@@ -578,6 +586,19 @@ static int dsi_panel_tx_cmd_set(struct dsi_panel *panel,
 	if (panel->type == EXT_BRIDGE)
 		return 0;
 
+#if 0//def CONFIG_EXPOSURE_ADJUSTMENT
+	if (type == DSI_CMD_SET_DISP_SRGB ||
+		type == DSI_CMD_SET_DISP_CRC_DCIP3 ||
+		type == DSI_CMD_SET_NIGHT_ON ||
+		type == DSI_CMD_SET_ONEPLUS_MODE_ON)
+		ea_panel_mode_ctrl(panel, true);
+	else if ((type > DSI_CMD_SET_POST_TIMING_SWITCH &&
+		type < DSI_CMD_SET_PANEL_SERIAL_NUMBER) ||
+		type > DSI_CMD_READ_SAMSUNG_PANEL_REGISTER_OFF ||
+		type < DSI_CMD_SET_CMD_TO_VID_SWITCH)
+		ea_panel_mode_ctrl(panel, false);
+#endif
+
 	mode = panel->cur_mode;
 
 	cmds = mode->priv_info->cmd_sets[type].cmds;
@@ -790,6 +811,11 @@ int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 
 	pr_debug("backlight type:%d lvl:%d\n", bl->type, bl_lvl);
 
+#ifdef CONFIG_EXPOSURE_ADJUSTMENT
+	//longnt test
+	//bl_lvl = ea_panel_calc_backlight(bl_lvl);
+#endif
+
 	if (bl_lvl && panel->hist_bl_offset && panel->hist_bl_offset < HIST_BL_OFFSET_LIMIT) {
 		bl_lvl = bl_lvl + panel->hist_bl_offset;
 		pr_info("set backlight offset:%d\n", bl_lvl);
@@ -810,6 +836,10 @@ int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 		pr_err("Backlight type(%d) not supported\n", bl->type);
 		rc = -ENOTSUPP;
 	}
+
+#ifdef CONFIG_KLAPSE
+	set_rgb_slider(bl_lvl);
+#endif
 
 	if (((panel->last_bl_lvl == 0) || (panel->skip_dimmingon == STATE_DIM_RESTORE)) && bl_lvl) {
 		if (panel->panel_on_dimming_delay)

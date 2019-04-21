@@ -3,7 +3,7 @@
  * them to run sooner, but does not allow tons of sleepers to
  * rip the spread apart.
  */
-SCHED_FEAT(GENTLE_FAIR_SLEEPERS, true)
+SCHED_FEAT(GENTLE_FAIR_SLEEPERS, false)
 
 /*
  * Place new tasks ahead so that they do not starve already running
@@ -90,7 +90,7 @@ SCHED_FEAT(ENERGY_AWARE, false)
  * If enabled, this can be used to inform the scheduler about capacity
  * restrictions.
  */
-SCHED_FEAT(MIN_CAPACITY_CAPPING, false)
+SCHED_FEAT(MIN_CAPACITY_CAPPING, true)
 
 /*
  * Enforce the priority of candidates selected by find_best_target()

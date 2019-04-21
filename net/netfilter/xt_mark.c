@@ -13,7 +13,7 @@
 #include <linux/module.h>
 #include <linux/skbuff.h>
 
-#include <linux/netfilter/xt_mark.h>
+#include "../../include/uapi/linux/netfilter/xt_MARK.h"
 #include <linux/netfilter/x_tables.h>
 
 MODULE_LICENSE("GPL");

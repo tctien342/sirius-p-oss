@@ -524,8 +524,8 @@ static int clk_find_vdd_level(struct clk_core *clk, unsigned long rate)
 			break;
 
 	if (level == clk->num_rate_max) {
-		pr_err("Rate %lu for %s is greater than highest Fmax\n", rate,
-				clk->name);
+		pr_err("[clk.c] Rate %lu for %s is greater than highest Fmax = %d \n", rate,
+				clk->name, clk->num_rate_max);
 		return -EINVAL;
 	}
 
@@ -3697,6 +3697,8 @@ static int clk_add_and_print_opp(struct clk_hw *hw,
 	struct clk_core *core = hw->core;
 	int j, ret = 0;
 
+	//pr_info("[longnt] clk_add_and_print_opp num_rate_max = %d rate = %lu uv = %d\n", core->num_rate_max, rate, uv);
+
 	for (j = 0; j < count; j++) {
 		ret = dev_pm_opp_add(device_list[j], rate, uv);
 		if (ret) {
@@ -3707,7 +3709,7 @@ static int clk_add_and_print_opp(struct clk_hw *hw,
 
 		if (n == 0 || n == core->num_rate_max - 1 ||
 					rate == clk_hw_round_rate(hw, INT_MAX))
-			pr_info("%s: set OPP pair(%lu Hz: %u uV) on %s\n",
+			pr_info("[clk.c]%s: set OPP pair(%lu Hz: %u uV) on %s\n",
 						core->name, rate, uv,
 						dev_name(device_list[j]));
 	}
@@ -3725,6 +3727,8 @@ static void clk_populate_clock_opp_table(struct device_node *np,
 
 	if (!core || !core->num_rate_max)
 		return;
+
+	//pr_info("[longnt] clk_populate_clock_opp_table = %s max =%d\n", core->name, core->num_rate_max);
 
 	if (strlen(core->name) + LEN_OPP_HANDLE < MAX_LEN_OPP_HANDLE) {
 		ret = snprintf(clk_handle_name, ARRAY_SIZE(clk_handle_name),

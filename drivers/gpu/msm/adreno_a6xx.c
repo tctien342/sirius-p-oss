@@ -1643,7 +1643,7 @@ static int a6xx_gfx_rail_on(struct kgsl_device *device)
 	unsigned int perf_idx;
 	int ret;
 
-	perf_idx = pwr->num_pwrlevels - pwr->default_pwrlevel - 1;
+	perf_idx = pwr->num_pwrlevels - 1;
 	default_opp = &gmu->rpmh_votes.gx_votes[perf_idx];
 
 	kgsl_gmu_regwrite(device, A6XX_GMU_BOOT_SLUMBER_OPTION,
@@ -1672,8 +1672,8 @@ static int a6xx_notify_slumber(struct kgsl_device *device)
 	struct adreno_device *adreno_dev = ADRENO_DEVICE(device);
 	struct kgsl_pwrctrl *pwr = &device->pwrctrl;
 	struct gmu_device *gmu = &device->gmu;
-	int bus_level = pwr->pwrlevels[pwr->default_pwrlevel].bus_freq;
-	int perf_idx = gmu->num_gpupwrlevels - pwr->default_pwrlevel - 1;
+	int bus_level = pwr->pwrlevels[pwr->num_pwrlevels - 1].bus_freq;
+	int perf_idx = gmu->num_gpupwrlevels - 1;
 	int ret, state;
 
 	/* Disable the power counter so that the GMU is not busy */
@@ -1723,6 +1723,7 @@ static int a6xx_rpmh_power_on_gpu(struct kgsl_device *device)
 	struct device *dev = &gmu->pdev->dev;
 	int val;
 
+	//dev_info(dev, "[longnt] a6xx_rpmh_power_on_gpu\n");
 	/* Only trigger wakeup sequence if sleep sequence was done earlier */
 	if (!test_bit(GMU_RSCC_SLEEP_SEQ_DONE, &gmu->flags))
 		return 0;
@@ -1774,6 +1775,7 @@ static int a6xx_rpmh_power_off_gpu(struct kgsl_device *device)
 	struct adreno_device *adreno_dev = ADRENO_DEVICE(device);
 	int ret;
 
+	//dev_info(&gmu->pdev->dev, "[longnt] a6xx_rpmh_power_OFF_gpu\n");
 	if (test_bit(GMU_RSCC_SLEEP_SEQ_DONE, &gmu->flags))
 		return 0;
 
@@ -3643,14 +3645,20 @@ static void a6xx_check_features(struct adreno_device *adreno_dev)
 {
 	unsigned int i;
 
+	//pr_info("[longnt] before adreno_efuse_map: GPU speed_bin:%d\n", adreno_dev->speed_bin);
 	if (adreno_efuse_map(adreno_dev))
 		return;
+	//pr_info("[longnt] after adreno_efuse_map: GPU speed_bin:%d\n", adreno_dev->speed_bin);
 	for (i = 0; i < ARRAY_SIZE(a6xx_efuse_funcs); i++) {
 		if (a6xx_efuse_funcs[i].check(adreno_dev))
 			a6xx_efuse_funcs[i].func(adreno_dev);
 	}
 
 	adreno_efuse_unmap(adreno_dev);
+	
+	//pr_info("[longnt] a6xx_check_features try to fake GPU speed_bin:%d\n", adreno_dev->speed_bin);
+	//adreno_dev->speed_bin = 128;
+	//pr_info("[longnt] a6xx_check_features new GPU speed_bin:%d\n", adreno_dev->speed_bin);
 }
 static void a6xx_platform_setup(struct adreno_device *adreno_dev)
 {
@@ -3676,10 +3684,10 @@ static void a6xx_platform_setup(struct adreno_device *adreno_dev)
 
 		gpudev->vbif_xin_halt_ctrl0_mask =
 				A6XX_GBIF_HALT_MASK;
-	} else
+	} else {
 		gpudev->vbif_xin_halt_ctrl0_mask =
 				A6XX_VBIF_XIN_HALT_CTRL0_MASK;
-
+	}
 	/* Check efuse bits for various capabilties */
 	a6xx_check_features(adreno_dev);
 }

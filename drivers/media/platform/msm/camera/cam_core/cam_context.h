@@ -17,16 +17,16 @@
 #include <linux/mutex.h>
 #include <linux/spinlock.h>
 #include <linux/kref.h>
-#include "cam_req_mgr_interface.h"
+#include "../cam_req_mgr/cam_req_mgr_interface.h"
 #include "cam_hw_mgr_intf.h"
 
 /* Forward declarations */
 struct cam_context;
 
 /* max request number */
-#define CAM_CTX_REQ_MAX              20
-#define CAM_CTX_CFG_MAX              20
-#define CAM_CTX_RES_MAX              20
+#define CAM_CTX_REQ_MAX              48
+#define CAM_CTX_CFG_MAX              48
+#define CAM_CTX_RES_MAX              48
 
 /**
  * enum cam_ctx_state -  context top level states

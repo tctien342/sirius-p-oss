@@ -56,9 +56,9 @@ static int msm_v4l2_open(struct file *filp)
 	trace_msm_v4l2_vidc_open_start("msm_v4l2_open start");
 	vidc_inst = msm_vidc_open(core->id, vid_dev->type);
 	if (!vidc_inst) {
-		dprintk(VIDC_ERR,
-		"Failed to create video instance, core: %d, type = %d\n",
-		core->id, vid_dev->type);
+		//dprintk(VIDC_ERR,
+		//"Failed to create video instance, core: %d, type = %d\n",
+		//core->id, vid_dev->type);
 		return -ENOMEM;
 	}
 	clear_bit(V4L2_FL_USES_V4L2_FH, &vdev->flags);
@@ -308,8 +308,8 @@ static int read_platform_resources(struct msm_vidc_core *core,
 	int rc = 0;
 
 	if (!core || !pdev) {
-		dprintk(VIDC_ERR, "%s: Invalid params %pK %pK\n",
-			__func__, core, pdev);
+		//dprintk(VIDC_ERR, "%s: Invalid params %pK %pK\n",
+		//	__func__, core, pdev);
 		return -EINVAL;
 	}
 
@@ -320,7 +320,7 @@ static int read_platform_resources(struct msm_vidc_core *core,
 		rc = read_platform_resources_from_drv_data(core);
 		rc = read_platform_resources_from_dt(&core->resources);
 	} else {
-		dprintk(VIDC_ERR, "pdev node is NULL\n");
+		//dprintk(VIDC_ERR, "pdev node is NULL\n");
 		rc = -EINVAL;
 	}
 	return rc;
@@ -336,7 +336,7 @@ static int msm_vidc_initialize_core(struct platform_device *pdev,
 		return -EINVAL;
 	rc = read_platform_resources(core, pdev);
 	if (rc) {
-		dprintk(VIDC_ERR, "Failed to get platform resources\n");
+		//dprintk(VIDC_ERR, "Failed to get platform resources\n");
 		return rc;
 	}
 
@@ -354,8 +354,8 @@ static int msm_vidc_initialize_core(struct platform_device *pdev,
 	mutex_lock(&core->lock);
 	core->vote_data = kcalloc(MAX_SUPPORTED_INSTANCES,
 		sizeof(*core->vote_data), GFP_KERNEL);
-	if (!core->vote_data)
-		dprintk(VIDC_ERR, "%s: failed to allocate memory\n", __func__);
+	//if (!core->vote_data)
+		//dprintk(VIDC_ERR, "%s: failed to allocate memory\n", __func__);
 	mutex_unlock(&core->lock);
 
 	return rc;
@@ -433,12 +433,12 @@ static ssize_t store_thermal_level(struct device *dev,
 
 	rc = kstrtoint(buf, 0, &val);
 	if (rc || val < 0) {
-		dprintk(VIDC_WARN,
-			"Invalid thermal level value: %s\n", buf);
+		//dprintk(VIDC_WARN,
+		//	"Invalid thermal level value: %s\n", buf);
 		return -EINVAL;
 	}
-	dprintk(VIDC_DBG, "Thermal level old %d new %d\n",
-			vidc_driver->thermal_level, val);
+	//dprintk(VIDC_DBG, "Thermal level old %d new %d\n",
+	//		vidc_driver->thermal_level, val);
 
 	if (val == vidc_driver->thermal_level)
 		return count;
@@ -462,7 +462,7 @@ static ssize_t store_sku_version(struct device *dev,
 		struct device_attribute *attr, const char *buf,
 		size_t count)
 {
-	dprintk(VIDC_WARN, "store platform version is not allowed\n");
+	//dprintk(VIDC_WARN, "store platform version is not allowed\n");
 	return count;
 }
 
@@ -495,7 +495,7 @@ static int msm_vidc_probe_vidc_device(struct platform_device *pdev)
 	int nr = BASE_DEVICE_NUMBER;
 
 	if (!vidc_driver) {
-		dprintk(VIDC_ERR, "Invalid vidc driver\n");
+		//dprintk(VIDC_ERR, "Invalid vidc driver\n");
 		return -EINVAL;
 	}
 
@@ -507,13 +507,13 @@ static int msm_vidc_probe_vidc_device(struct platform_device *pdev)
 	dev_set_drvdata(&pdev->dev, core);
 	rc = msm_vidc_initialize_core(pdev, core);
 	if (rc) {
-		dprintk(VIDC_ERR, "Failed to init core\n");
+		//dprintk(VIDC_ERR, "Failed to init core\n");
 		goto err_core_init;
 	}
 	rc = sysfs_create_group(&pdev->dev.kobj, &msm_vidc_core_attr_group);
 	if (rc) {
-		dprintk(VIDC_ERR,
-				"Failed to create attributes\n");
+		//dprintk(VIDC_ERR,
+		//		"Failed to create attributes\n");
 		goto err_core_init;
 	}
 
@@ -521,7 +521,7 @@ static int msm_vidc_probe_vidc_device(struct platform_device *pdev)
 
 	rc = v4l2_device_register(&pdev->dev, &core->v4l2_dev);
 	if (rc) {
-		dprintk(VIDC_ERR, "Failed to register v4l2 device\n");
+		//dprintk(VIDC_ERR, "Failed to register v4l2 device\n");
 		goto err_v4l2_register;
 	}
 
@@ -536,7 +536,7 @@ static int msm_vidc_probe_vidc_device(struct platform_device *pdev)
 	rc = video_register_device(&core->vdev[MSM_VIDC_DECODER].vdev,
 					VFL_TYPE_GRABBER, nr);
 	if (rc) {
-		dprintk(VIDC_ERR, "Failed to register video decoder device");
+		//dprintk(VIDC_ERR, "Failed to register video decoder device");
 		goto err_dec_register;
 	}
 
@@ -544,8 +544,8 @@ static int msm_vidc_probe_vidc_device(struct platform_device *pdev)
 	dev = &core->vdev[MSM_VIDC_DECODER].vdev.dev;
 	rc = device_create_file(dev, &dev_attr_link_name);
 	if (rc) {
-		dprintk(VIDC_ERR,
-				"Failed to create link name sysfs for decoder");
+		//dprintk(VIDC_ERR,
+		//		"Failed to create link name sysfs for decoder");
 		goto err_dec_attr_link_name;
 	}
 
@@ -560,7 +560,7 @@ static int msm_vidc_probe_vidc_device(struct platform_device *pdev)
 	rc = video_register_device(&core->vdev[MSM_VIDC_ENCODER].vdev,
 				VFL_TYPE_GRABBER, nr + 1);
 	if (rc) {
-		dprintk(VIDC_ERR, "Failed to register video encoder device");
+		//dprintk(VIDC_ERR, "Failed to register video encoder device");
 		goto err_enc_register;
 	}
 
@@ -568,8 +568,8 @@ static int msm_vidc_probe_vidc_device(struct platform_device *pdev)
 	dev = &core->vdev[MSM_VIDC_ENCODER].vdev.dev;
 	rc = device_create_file(dev, &dev_attr_link_name);
 	if (rc) {
-		dprintk(VIDC_ERR,
-				"Failed to create link name sysfs for encoder");
+		//dprintk(VIDC_ERR,
+		//		"Failed to create link name sysfs for encoder");
 		goto err_enc_attr_link_name;
 	}
 
@@ -577,8 +577,8 @@ static int msm_vidc_probe_vidc_device(struct platform_device *pdev)
 	mutex_lock(&vidc_driver->lock);
 	if (vidc_driver->num_cores  + 1 > MSM_VIDC_CORES_MAX) {
 		mutex_unlock(&vidc_driver->lock);
-		dprintk(VIDC_ERR, "Maximum cores already exist, core_no = %d\n",
-				vidc_driver->num_cores);
+		//dprintk(VIDC_ERR, "Maximum cores already exist, core_no = %d\n",
+		//		vidc_driver->num_cores);
 		goto err_cores_exceeded;
 	}
 	vidc_driver->num_cores++;
@@ -592,10 +592,10 @@ static int msm_vidc_probe_vidc_device(struct platform_device *pdev)
 		mutex_unlock(&vidc_driver->lock);
 
 		rc = PTR_ERR(core->device) ?: -EBADHANDLE;
-		if (rc != -EPROBE_DEFER)
-			dprintk(VIDC_ERR, "Failed to create HFI device\n");
-		else
-			dprintk(VIDC_DBG, "msm_vidc: request probe defer\n");
+		//if (rc != -EPROBE_DEFER)
+			//dprintk(VIDC_ERR, "Failed to create HFI device\n");
+		//else
+			//dprintk(VIDC_DBG, "msm_vidc: request probe defer\n");
 		goto err_cores_exceeded;
 	}
 
@@ -608,7 +608,7 @@ static int msm_vidc_probe_vidc_device(struct platform_device *pdev)
 
 	vidc_driver->sku_version = core->resources.sku_version;
 
-	dprintk(VIDC_DBG, "populating sub devices\n");
+	//dprintk(VIDC_DBG, "populating sub devices\n");
 	/*
 	 * Trigger probe for each sub-device i.e. qcom,msm-vidc,context-bank.
 	 * When msm_vidc_probe is called for each sub-device, parse the
@@ -618,7 +618,7 @@ static int msm_vidc_probe_vidc_device(struct platform_device *pdev)
 	rc = of_platform_populate(pdev->dev.of_node, msm_vidc_dt_match, NULL,
 			&pdev->dev);
 	if (rc) {
-		dprintk(VIDC_ERR, "Failed to trigger probe for sub-devices\n");
+		//dprintk(VIDC_ERR, "Failed to trigger probe for sub-devices\n");
 		goto err_fail_sub_device_probe;
 	}
 
@@ -684,13 +684,13 @@ static int msm_vidc_remove(struct platform_device *pdev)
 	struct msm_vidc_core *core;
 
 	if (!pdev) {
-		dprintk(VIDC_ERR, "%s invalid input %pK", __func__, pdev);
+		//dprintk(VIDC_ERR, "%s invalid input %pK", __func__, pdev);
 		return -EINVAL;
 	}
 
 	core = dev_get_drvdata(&pdev->dev);
 	if (!core) {
-		dprintk(VIDC_ERR, "%s invalid core", __func__);
+		//dprintk(VIDC_ERR, "%s invalid core", __func__);
 		return -EINVAL;
 	}
 
@@ -736,15 +736,15 @@ static int msm_vidc_pm_suspend(struct device *dev)
 
 	core = dev_get_drvdata(dev);
 	if (!core) {
-		dprintk(VIDC_ERR, "%s invalid core\n", __func__);
+		//dprintk(VIDC_ERR, "%s invalid core\n", __func__);
 		return -EINVAL;
 	}
 
 	rc = msm_vidc_suspend(core->id);
 	if (rc == -ENOTSUPP)
 		rc = 0;
-	else if (rc)
-		dprintk(VIDC_WARN, "Failed to suspend: %d\n", rc);
+	//else if (rc)
+		//dprintk(VIDC_WARN, "Failed to suspend: %d\n", rc);
 
 
 	return rc;
@@ -752,7 +752,7 @@ static int msm_vidc_pm_suspend(struct device *dev)
 
 static int msm_vidc_pm_resume(struct device *dev)
 {
-	dprintk(VIDC_INFO, "%s\n", __func__);
+	//dprintk(VIDC_INFO, "%s\n", __func__);
 	return 0;
 }
 

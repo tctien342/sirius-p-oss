@@ -57,8 +57,8 @@ int find_vdd_level(struct clk *clk, unsigned long rate)
 			break;
 
 	if (level == clk->num_fmax) {
-		pr_err("Rate %lu for %s is greater than highest Fmax\n", rate,
-			clk->dbg_name);
+		pr_err("[clock.c] Rate %lu for %s is greater than highest Fmax = %d\n", rate,
+			clk->dbg_name, clk->num_fmax);
 		return -EINVAL;
 	}
 
@@ -1176,7 +1176,7 @@ static int add_and_print_opp(struct clk *clk, struct device **device_list,
 		}
 		if (n == 1 || n == clk->num_fmax - 1 ||
 					rate == clk_round_rate(clk, INT_MAX))
-			pr_info("%s: set OPP pair(%lu Hz: %u uV) on %s\n",
+			pr_info("[clock.c]%s: set OPP pair(%lu Hz: %u uV) on %s\n",
 						clk->dbg_name, rate, uv,
 						dev_name(device_list[j]));
 	}

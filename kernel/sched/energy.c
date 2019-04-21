@@ -16,6 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#define IMPROVE_SCHEDULER 1
 #define pr_fmt(fmt) "sched-energy: " fmt
 
 #include <linux/gfp.h>
@@ -300,6 +301,10 @@ static int sched_energy_probe(struct platform_device *pdev)
 
 		walt_sched_energy_populated_callback();
 	}
+
+#if IMPROVE_SCHEDULER
+	walt_map_freq_to_load();
+#endif
 
 	dev_info(&pdev->dev, "Sched-energy-costs capacity updated\n");
 	return 0;

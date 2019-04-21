@@ -39,6 +39,10 @@
 #include "sde_core_perf.h"
 #include "sde_trace.h"
 
+//#ifdef CONFIG_EXPOSURE_ADJUSTMENT
+//#include "exposure_adjustment.h"
+//#endif
+
 #define SDE_PSTATES_MAX (SDE_STAGE_MAX * 4)
 #define SDE_MULTIRECT_PLANE_MAX (SDE_STAGE_MAX * 2)
 
