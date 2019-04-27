@@ -90,6 +90,15 @@ do { \
 #define TYPE_B_PROTOCOL
 #endif
 
+#ifdef CONFIG_WAKE_GESTURES
+#include <linux/wake_gestures.h>
+static bool is_suspended;
+bool scr_suspended_blueline(void)
+{
+	return is_suspended;
+}
+#endif
+
 #define INPUT_EVENT_START			0
 #define INPUT_EVENT_SENSITIVE_MODE_OFF		0
 #define INPUT_EVENT_SENSITIVE_MODE_ON		1
@@ -2390,6 +2399,11 @@ static void fts_enter_pointer_event_handler(struct fts_ts_info *info,
 	if (touch_condition)
 		input_report_key(info->input_dev, BTN_TOOL_FINGER, 1);
 
+	#ifdef CONFIG_WAKE_GESTURES
+	if (is_suspended)
+		x += 5000;
+	#endif
+
 	/*input_report_abs(info->input_dev, ABS_MT_TRACKING_ID, touchId); */
 	input_report_abs(info->input_dev, ABS_MT_POSITION_X, x);
 	input_report_abs(info->input_dev, ABS_MT_POSITION_Y, y);
@@ -3654,6 +3668,13 @@ static void fts_resume_work(struct work_struct *work)
 
 	info = container_of(work, struct fts_ts_info, resume_work);
 
+#ifdef CONFIG_WAKE_GESTURES
+	disable_irq_wake(info->client->irq);
+	fts_system_reset();
+	release_all_touches(info);
+	return;
+#endif
+
 	info->resume_bit = 1;
 
 	fts_system_reset();
@@ -3675,6 +3696,12 @@ static void fts_suspend_work(struct work_struct *work)
 	struct fts_ts_info *info;
 
 	info = container_of(work, struct fts_ts_info, suspend_work);
+
+#ifdef CONFIG_WAKE_GESTURES
+	enable_irq_wake(info->client->irq);
+	release_all_touches(info);
+	return;
+#endif
 
 	info->resume_bit = 0;
 
@@ -3711,6 +3738,12 @@ static int fts_drm_state_chg_callback(struct notifier_block *nb,
 		flush_workqueue(info->event_wq);
 
 		if (val == DRM_EARLY_EVENT_BLANK && blank == DRM_BLANK_POWERDOWN) {
+#ifdef CONFIG_WAKE_GESTURES
+		if (wg_switch) {
+			is_suspended = true;
+			break;
+		}
+#endif
 			if (info->sensor_sleep)
 				return NOTIFY_OK;
 
@@ -3719,6 +3752,16 @@ static int fts_drm_state_chg_callback(struct notifier_block *nb,
 
 			queue_work(info->event_wq, &info->suspend_work);
 		} else if (val == DRM_EVENT_BLANK && blank == DRM_BLANK_UNBLANK) {
+#ifdef CONFIG_WAKE_GESTURES
+		if (wg_switch) {
+			is_suspended = false;
+			break;
+		}
+		if (wg_changed) {
+			wg_switch = wg_switch_temp;
+			wg_changed = false;
+		}
+#endif
 			if (!info->sensor_sleep)
 				return NOTIFY_OK;
 
