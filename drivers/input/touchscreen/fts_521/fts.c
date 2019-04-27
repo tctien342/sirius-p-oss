@@ -181,6 +181,7 @@ void release_all_touches(struct fts_ts_info *info)
 #endif
 }
 
+
 /**
  * @defgroup file_nodes Driver File Nodes
  * Driver publish a series of file nodes used to provide several utilities to the host and give him access to different API.
@@ -3741,7 +3742,7 @@ static int fts_drm_state_chg_callback(struct notifier_block *nb,
 #ifdef CONFIG_WAKE_GESTURES
 		if (wg_switch) {
 			is_suspended = true;
-			break;
+			return NOTIFY_OK;
 		}
 #endif
 			if (info->sensor_sleep)
@@ -3755,7 +3756,7 @@ static int fts_drm_state_chg_callback(struct notifier_block *nb,
 #ifdef CONFIG_WAKE_GESTURES
 		if (wg_switch) {
 			is_suspended = false;
-			break;
+			return NOTIFY_OK;
 		}
 		if (wg_changed) {
 			wg_switch = wg_switch_temp;

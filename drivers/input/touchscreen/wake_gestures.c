@@ -129,10 +129,9 @@ static struct work_struct s2w_input_work;
 static struct work_struct dt2w_input_work;
 
 //get hardware type
-static int hw_version = CROSSHATCH;
+static int hw_version = BLUELINE;
 static int __init get_model(char *cmdline_model)
 {
-	if (strstr(cmdline_model, "blueline")) {
 		sweep_y_limit = SWEEP_Y_LIMIT_BLUELINE;
 		sweep_x_limit = SWEEP_X_LIMIT_BLUELINE;
 		sweep_x_b1 = SWEEP_X_B1_BLUELINE;
@@ -144,17 +143,13 @@ static int __init get_model(char *cmdline_model)
 		sweep_x_max = SWEEP_X_MAX_BLUELINE;
 		sweep_edge = SWEEP_EDGE_BLUELINE;
 		hw_version = BLUELINE;
-	}
 	return 0;
 }
 __setup("androidboot.hardware=", get_model);
 
 static bool is_suspended(void)
 {
-	if (hw_version == BLUELINE)
-		return scr_suspended_blueline();
-	else
-		return scr_suspended();
+	return scr_suspended_blueline();
 }
 
 /* Wake Gestures */
