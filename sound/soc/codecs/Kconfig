@@ -1089,4 +1089,9 @@ config SND_SOC_TPA6130A2
 	tristate "Texas Instruments TPA6130A2 headphone amplifier"
 	depends on I2C
 
+config SOUND_CONTROL
+	bool "Sound Control engine"
+	help
+		Sound Control engine by JonasCardoso
+
 endmenu

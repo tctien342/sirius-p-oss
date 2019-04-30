@@ -37,6 +37,12 @@
 #include "tfa.h"
 #include "tfa_dsp_fw.h"
 
+#ifdef CONFIG_SOUND_CONTROL
+#include "../../sound_control.h"
+struct snd_soc_codec *tfa98xx_codec_ptr;
+int default_speaker_value;
+#endif
+
 /* required for enum tfa9912_irq */
 #include "tfa98xx_tfafieldnames.h"
 
@@ -2774,6 +2780,37 @@ static int tfa98xx_hw_params(struct snd_pcm_substream *substream,
 
 	return 0;
 }
+
+#ifdef CONFIG_SOUND_CONTROL
+int get_speaker_show()
+{
+	int val;
+	val = get_speaker();	// mono speaker, so we alwas treat L and R the same
+	val = (val >> 8) * -1;
+	// print current values
+ 	return pr_info("Sound Control: Boosted Speaker TFA98XX value %d\n", val);
+}
+int get_speaker()
+{
+	/*return snprintf(PAGE_SIZE, "%d\n",
+		snd_soc_read(tfa98xx_codec_ptr, TFA98XX_AUDIO_CTR));*/
+	return snd_soc_read(tfa98xx_codec_ptr, TFA98XX_AUDIO_CTR);
+}
+
+void set_speaker_boost(int vol_speaker_boost)
+{
+	// store new value
+	int default_speaker_val = get_speaker();
+	int boosted_speaker_val = vol_speaker_boost;
+	int tmp;
+	// set new values
+	tmp = (vol_speaker_boost * -1) + default_speaker_val;
+	tmp = (tmp << 8) + (get_speaker() & 0x00FF);
+	snd_soc_write(tfa98xx_codec_ptr, TFA98XX_AUDIO_CTR, tmp);
+	// print debug info
+	get_speaker_show();
+}
+#endif
 
 #ifdef TFA_NON_DSP_SOLUTION
 extern int send_tfa_cal_in_band(void *buf, int cmd_size);
